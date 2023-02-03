@@ -18,7 +18,5 @@ def main():
 
 @app.route("/character-templates/", methods=['GET'])
 def character_templates():
-    characters = list(db.character_templates.find({}))
-    g = Graph().parse(data=json_util.dumps(characters), format='json-ld')
-    jsonld = json.loads(g.serialize(format='json-ld'))
-    return jsonify(jsonld), 200, {'Content-Type': 'application/ld+json'}
+    characters = list(db.character_templates.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
+    return jsonify(json.loads(json_util.dumps(characters))), 200, {'Content-Type': 'application/ld+json'}
