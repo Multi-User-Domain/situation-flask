@@ -1,0 +1,62 @@
+[
+    {
+        "_id": {
+            "$oid": "62b365787a3ee8953b0443c5"
+        },
+        "@context": {
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "n": "http://www.w3.org/2006/vcard/ns#",
+            "mud": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mud#",
+            "mudchar": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#",
+            "mudcontent": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#"
+        },
+        "n:fn": "Osprey Withers",
+        "n:hasGender": "n:Male",
+        "foaf:name": "Osprey Withers",
+        "mud:species": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudfantasy.ttl#Vampire",
+        "mudcontent:hasSense": {
+            "@id": "_VampiricSight",
+            "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#Sight",
+            "mudcontent:senseStrength": 10
+        },
+        "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character",
+        "@id": "http://localhost:5000/character-templates/osprey-withers"
+    },
+    {
+        "_id": {
+            "$oid": "62b365787a3ee8953b0443c6"
+        },
+        "@context": {
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "n": "http://www.w3.org/2006/vcard/ns#",
+            "mud": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mud#",
+            "mudchar": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#",
+            "mudcontent": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#"
+        },
+        "n:fn": "Achilles",
+        "n:hasGender": "n:Male",
+        "foaf:name": "Achilles",
+        "foaf:depiction": "http://images.fineartamerica.com/images-medium-large/achilles-arturas-slapsys.jpg",
+        "mud:species": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mud.ttl#Human",
+        "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character",
+        "@id": "http://localhost:5000/character-templates/achilles"
+    },
+    {
+        "_id": {
+            "$oid": "62b365787a3ee8953b0443c7"
+        },
+        "@context": {
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "n": "http://www.w3.org/2006/vcard/ns#",
+            "mud": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mud#",
+            "mudchar": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#",
+            "mudcontent": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#"
+        },
+        "n:fn": "Floppy Le Redoux",
+        "n:hasGender": "n:Female",
+        "foaf:name": "Floppy Le Redoux",
+        "mud:species": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mud.ttl#Human",
+        "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character",
+        "@id": "http://localhost:5000/character-templates/floppy-le-redoux"
+    }
+]
