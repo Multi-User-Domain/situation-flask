@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+import uuid
 from flask import Flask, request, jsonify
 #from rdflib import Graph
 from urllib.parse import unquote_plus
@@ -52,7 +52,7 @@ def _get_target_obj(world_data, action_data):
 
 def _get_recorded_history_for_event(event_text):
     return {
-        "@id": "_:RecordedHistory_" + str(datetime.now()),
+        "@id": "_:RecordedHistory_" + str(uuid.uuid4()),
         "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/games/twt2023.ttl#RecordedHistory",
         "n:hasNote": event_text
     }
