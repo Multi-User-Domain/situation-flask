@@ -94,9 +94,6 @@ def bog_monster_eats_villager():
     if "mudworld:hasPopulations" in target:
         for pop in target["mudworld:hasPopulations"]:
             if "mudworld:populationNumber" in pop and pop["mudworld:populationNumber"] > 0 and "mud:species" in pop and pop["mud:species"]["@id"] == "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mud.ttl#Human":
-                deletes = [
-                    pop
-                ]
                 pop["mudworld:populationNumber"] = pop["mudworld:populationNumber"] - 1
                 if pop["mudworld:populationNumber"] == 0:
                     message = f"{actor_data['n:fn']} ate the last villager in the region {target['n:fn']}, now they are extinct!"
@@ -106,7 +103,7 @@ def bog_monster_eats_villager():
                     pop,
                     _get_recorded_history_for_event(message)
                 ]
-                result = _prepare_action_changes(action_data, deletes, inserts)
+                result = _prepare_action_changes(action_data, [], inserts)
                 break
 
     return jsonify(result), 200, {'Content-Type': 'application/ld+json'}
