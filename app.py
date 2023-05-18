@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def main():
-    return None, 204
+    return "Hello world!", 200
 
 '''
 @app.route("/character-templates/", methods=['GET'])
