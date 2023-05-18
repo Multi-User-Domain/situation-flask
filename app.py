@@ -10,8 +10,10 @@ from bson import json_util
 
 app = Flask(__name__)
 
+# TODO: environment variables
 client = MongoClient('localhost', 27017)
 db = client.situation
+site_url = "https://realm.games.coop"
 
 @app.route("/")
 def main():
@@ -33,6 +35,9 @@ def characters():
     if request.method == 'POST':
         jsonld = request.get_json()
         # TODO: data validation
+
+        if "@id" not in jsonld:
+            jsonld["@id"] = f"{site_url}/characters/{str(uuid.uuid4())}/"
 
         db.characters.find_one_and_replace(
             {"@id": jsonld["@id"]},
