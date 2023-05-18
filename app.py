@@ -50,6 +50,26 @@ def characters():
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, {'Content-Type': 'application/ld+json'}
 
+@app.route("/cards/", methods=['GET', 'POST'])
+def cards():
+    if request.method == 'POST':
+        jsonld = request.get_json()
+        # TODO: data validation
+
+        if "@id" not in jsonld or len(jsonld["@id"]) == 0:
+            jsonld["@id"] = f"{site_url}/cards/{str(uuid.uuid4())}/"
+
+        db.cards.find_one_and_replace(
+            {"@id": jsonld["@id"]},
+            jsonld,
+            upsert=True
+        )
+
+        return jsonify(jsonld), 200
+
+    cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
+    return jsonify(json.loads(json_util.dumps(cards))), 200, {'Content-Type': 'application/ld+json'}
+
 '''
 Routes for supporting complex behaviour in cards
 '''
