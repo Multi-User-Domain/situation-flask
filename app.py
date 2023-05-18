@@ -13,7 +13,7 @@ app = Flask(__name__)
 # TODO: environment variables
 client = MongoClient('localhost', 27017)
 db = client.situation
-site_url = "https://realm.games.coop"
+site_url = "https://api.realm.games.coop"
 
 @app.route("/")
 def main():
