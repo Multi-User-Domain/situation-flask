@@ -28,8 +28,20 @@ def character_templates():
 REST endpoints for characters, cards, events, actions
 '''
 
-@app.route("/characters/", methods=['GET'])
+@app.route("/characters/", methods=['GET', 'POST'])
 def characters():
+    if request.method == 'POST':
+        jsonld = request.get_json()
+        # TODO: data validation
+
+        db.characters.find_one_and_replace(
+            {"@id": jsonld["@id"]},
+            jsonld,
+            upsert=True
+        )
+
+        return jsonify(jsonld), 200
+
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, {'Content-Type': 'application/ld+json'}
 
