@@ -36,7 +36,7 @@ def characters():
         jsonld = request.get_json()
         # TODO: data validation
 
-        if "@id" not in jsonld:
+        if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/characters/{str(uuid.uuid4())}/"
 
         db.characters.find_one_and_replace(
