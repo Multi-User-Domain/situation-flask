@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify
 from urllib.parse import unquote_plus
 from pymongo import MongoClient
 from bson import json_util
+from mud.vocab import MUD_CHAR
 
 # config
 
@@ -36,6 +37,9 @@ def characters():
         jsonld = request.get_json()
         # TODO: data validation
 
+        if "@type" not in jsonld or len(jsonld["@type"]) == 0:
+            jsonld["@type"] = MUD_CHAR.Character
+
         if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/characters/{str(uuid.uuid4())}/"
 
@@ -55,6 +59,9 @@ def cards():
     if request.method == 'POST':
         jsonld = request.get_json()
         # TODO: data validation
+
+        if "@type" not in jsonld or len(jsonld["@type"]) == 0:
+            jsonld["@type"] = MUD_CHAR.Character
 
         if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/cards/{str(uuid.uuid4())}/"
