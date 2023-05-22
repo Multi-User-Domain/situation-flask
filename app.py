@@ -1,4 +1,5 @@
 import json
+import copy
 import uuid
 from flask import Flask, request, jsonify
 #from rdflib import Graph
@@ -34,7 +35,7 @@ REST endpoints for characters, cards, events, actions
 @app.route("/characters/", methods=['GET', 'POST'])
 def characters():
     if request.method == 'POST':
-        jsonld = request.get_json()
+        jsonld = copy.deepcopy(request.get_json())
         # TODO: data validation
 
         if "@type" not in jsonld or len(jsonld["@type"]) == 0:
@@ -57,7 +58,7 @@ def characters():
 @app.route("/cards/", methods=['GET', 'POST'])
 def cards():
     if request.method == 'POST':
-        jsonld = request.get_json()
+        jsonld = copy.deepcopy(request.get_json())
         # TODO: data validation
 
         if "@type" not in jsonld or len(jsonld["@type"]) == 0:
