@@ -32,8 +32,25 @@ def character_templates():
 REST endpoints for characters, cards, events, actions
 '''
 
-@app.route("/characters/", methods=['GET', 'POST'])
+def _get_headers(extra_headers={}):
+    headers = {
+        'Access-Control-Allow-Origin': request.headers["Origin"],
+        'Access-Control-Allow-Headers': 'access-control-allow-origin, content-type',
+        'Access-Control-Allow-Methods': 'GET, POST',
+        'Access-Control-Allow-Credentials': "true"
+    }
+    for header in extra_headers.keys():
+        headers[header] = extra_headers[header]
+    return headers
+
+def _get_default_options_response(request):
+    return jsonify({}), 200, _get_headers()
+
+@app.route("/characters/", methods=['GET', 'POST', 'OPTIONS'])
 def characters():
+    if request.method == 'OPTIONS':
+        return _get_default_options_response(request)
+    
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
         # TODO: data validation
@@ -53,10 +70,13 @@ def characters():
         return jsonify(jsonld), 200
 
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
-    return jsonify(json.loads(json_util.dumps(characters))), 200, {'Content-Type': 'application/ld+json'}
+    return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
-@app.route("/cards/", methods=['GET', 'POST'])
+@app.route("/cards/", methods=['GET', 'POST', 'OPTIONS'])
 def cards():
+    if request.method == 'OPTIONS':
+        return _get_default_options_response(request)
+    
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
         # TODO: data validation
@@ -76,7 +96,7 @@ def cards():
         return jsonify(jsonld), 200
 
     cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
-    return jsonify(json.loads(json_util.dumps(cards))), 200, {'Content-Type': 'application/ld+json'}
+    return jsonify(json.loads(json_util.dumps(cards))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
 '''
 Routes for supporting complex behaviour in cards
@@ -138,8 +158,11 @@ def _prepare_action_changes(action_data, deletes=[], inserts=[]):
 # TWT game jam endpoints
 # the data passed isn't negotiated for now, it's always the full world data of the battle
 # later we will want to support GET so that we can negotiate it using shapes
-@app.route("/bogMonsterEatsVillager/", methods=["POST"])
+@app.route("/bogMonsterEatsVillager/", methods=["POST", "OPTIONS"])
 def bog_monster_eats_villager():
+    if request.method == 'OPTIONS':
+        return _get_default_options_response(request)
+
     data = request.get_json()
     world_data = data["worldData"]
     action_data = data["actionData"]
@@ -164,4 +187,4 @@ def bog_monster_eats_villager():
                 result = _prepare_action_changes(action_data, [], inserts)
                 break
 
-    return jsonify(result), 200, {'Content-Type': 'application/ld+json'}
+    return jsonify(result), 200, _get_headers({'Content-Type': 'application/ld+json'})
