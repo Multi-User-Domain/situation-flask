@@ -34,11 +34,12 @@ REST endpoints for characters, cards, events, actions
 
 def _get_headers(extra_headers={}):
     headers = {
-        'Access-Control-Allow-Origin': request.headers["Origin"],
         'Access-Control-Allow-Headers': 'access-control-allow-origin, content-type',
         'Access-Control-Allow-Methods': 'GET, POST, DELETE',
         'Access-Control-Allow-Credentials': "true"
     }
+    if 'Origin' in request.headers:
+        headers['Access-Control-Allow-Origin'] = request.headers['Origin']
     for header in extra_headers.keys():
         headers[header] = extra_headers[header]
     return headers
