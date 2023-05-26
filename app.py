@@ -1,7 +1,8 @@
 import json
 import copy
 import uuid
-from flask import Flask, request, jsonify
+import base64
+from flask import Flask, request, jsonify, Response
 #from rdflib import Graph
 from urllib.parse import unquote_plus
 from pymongo import MongoClient
@@ -47,6 +48,17 @@ def _get_headers(extra_headers={}):
 def _get_default_options_response(request):
     return jsonify({}), 200, _get_headers()
 
+def _base64_to_png_response(image_as_base64_string: str, filename="image.png"):
+  """
+  From a string representing a base64 image, convert it to a png
+  and wrap it in a flask Response"""
+  image_data = image_as_base64_string.replace('data:image/png;base64,', '')
+  decoded_image = base64.b64decode(image_data)
+  response_headers = {
+      'Content-Type': 'image/png',
+      'Content-Disposition': f'attachment; filename={filename}'
+  }
+  return Response(decoded_image, headers=response_headers)
 @app.route("/characters/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def characters():
     if request.method == 'OPTIONS':
