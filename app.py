@@ -36,7 +36,7 @@ def _get_headers(extra_headers={}):
     headers = {
         'Access-Control-Allow-Origin': request.headers["Origin"],
         'Access-Control-Allow-Headers': 'access-control-allow-origin, content-type',
-        'Access-Control-Allow-Methods': 'GET, POST',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE',
         'Access-Control-Allow-Credentials': "true"
     }
     for header in extra_headers.keys():
@@ -46,7 +46,7 @@ def _get_headers(extra_headers={}):
 def _get_default_options_response(request):
     return jsonify({}), 200, _get_headers()
 
-@app.route("/characters/", methods=['GET', 'POST', 'OPTIONS'])
+@app.route("/characters/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def characters():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
@@ -67,12 +67,24 @@ def characters():
             upsert=True
         )
 
-        return jsonify(jsonld), 200
+        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+    
+    if request.method == 'DELETE':
+        jsonld = request.get_json()
+
+        if "@id" not in jsonld:
+            return "@id key is required for DELETE", 400
+
+        db.characters.find_one_and_delete({
+            {"@id": jsonld["@id"]}
+        })
+
+        return None, 204, _get_headers()
 
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
-@app.route("/cards/", methods=['GET', 'POST', 'OPTIONS'])
+@app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def cards():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
@@ -93,7 +105,19 @@ def cards():
             upsert=True
         )
 
-        return jsonify(jsonld), 200
+        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+    
+    if request.method == 'DELETE':
+        jsonld = request.get_json()
+
+        if "@id" not in jsonld:
+            return "@id key is required for DELETE", 400
+        
+        db.cards.find_one_and_delete({
+            {"@id": jsonld["@id"]}
+        })
+
+        return None, 204, _get_headers()
 
     cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(cards))), 200, _get_headers({'Content-Type': 'application/ld+json'})
