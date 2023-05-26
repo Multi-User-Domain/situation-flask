@@ -78,11 +78,9 @@ def characters():
         if "@id" not in jsonld:
             return "@id key is required for DELETE", 400
 
-        db.characters.find_one_and_delete({
-            {"@id": jsonld["@id"]}
-        })
+        db.characters.find_one_and_delete({"@id": jsonld["@id"]})
 
-        return None, 204, _get_headers()
+        return "", 204, _get_headers()
 
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
@@ -118,11 +116,9 @@ def cards():
         if "@id" not in jsonld:
             return "@id key is required for DELETE", 400
         
-        db.cards.find_one_and_delete({
-            {"@id": jsonld["@id"]}
-        })
+        db.cards.find_one_and_delete({"@id": jsonld["@id"]})
 
-        return None, 204, _get_headers()
+        return "", 204, _get_headers()
 
     cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(cards))), 200, _get_headers({'Content-Type': 'application/ld+json'})
