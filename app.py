@@ -54,7 +54,9 @@ def characters():
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
-        # TODO: data validation
+
+        if "_id" in jsonld:
+            jsonld.pop("_id")
 
         if "@type" not in jsonld or len(jsonld["@type"]) == 0:
             jsonld["@type"] = MUD_CHAR.Character
@@ -92,7 +94,9 @@ def cards():
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
-        # TODO: data validation
+
+        if "_id" in jsonld:
+            jsonld.pop("_id")
 
         if "@type" not in jsonld or len(jsonld["@type"]) == 0:
             jsonld["@type"] = MUD_CHAR.Character
