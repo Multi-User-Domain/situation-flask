@@ -127,6 +127,7 @@ def cards():
             fd = urlopen(jsonld["foaf:depiction"])
             image_file = io.BytesIO(fd.read())
             im = Image.open(image_file)
+            im.thumbnail((512, 512), Image.Resampling.LANCZOS)
             filename = str(uuid.uuid4()) + ".png"
             im.save(f'./images/{filename}')
             jsonld["foaf:depiction"] = site_url + "/images/" + filename
