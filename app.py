@@ -2,9 +2,12 @@ import json
 import copy
 import uuid
 import base64
-from flask import Flask, request, jsonify, Response
+import io
+from flask import Flask, request, jsonify, send_file, Response
 #from rdflib import Graph
 from urllib.parse import unquote_plus
+from urllib.request import urlopen
+from PIL import Image
 from pymongo import MongoClient
 from bson import json_util
 from mud.vocab import MUD_CHAR
@@ -59,6 +62,11 @@ def _base64_to_png_response(image_as_base64_string: str, filename="image.png"):
       'Content-Disposition': f'attachment; filename={filename}'
   }
   return Response(decoded_image, headers=response_headers)
+
+@app.route("/images/<image_path>")
+def image_uploaded(image_path):
+    return send_file(f"./images/{image_path}", mimetype='image/png'), 200, _get_headers()
+
 @app.route("/characters/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def characters():
     if request.method == 'OPTIONS':
@@ -113,6 +121,15 @@ def cards():
 
         if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/cards/{str(uuid.uuid4())}/"
+        
+        # process image
+        if "foaf:depiction" in jsonld:
+            fd = urlopen(jsonld["foaf:depiction"])
+            image_file = io.BytesIO(fd.read())
+            im = Image.open(image_file)
+            filename = str(uuid.uuid4()) + ".png"
+            im.save(f'./images/{filename}')
+            jsonld["foaf:depiction"] = site_url + "/images/" + filename
 
         db.cards.find_one_and_replace(
             {"@id": jsonld["@id"]},
