@@ -139,6 +139,13 @@ def cards():
             for i in range(len(jsonld["mudcard:hasAvailableInstantActions"])):
                 if "uri" in jsonld["mudcard:hasAvailableInstantActions"][i]:
                     jsonld["mudcard:hasAvailableInstantActions"][i]["@id"] = jsonld["mudcard:hasAvailableInstantActions"][i].pop("uri")
+                
+        # cap maximum HP to 30
+        if "mudcombat:hasHealthPoints" in jsonld:
+            if "mudcombat:maximumP" not in jsonld["mudcombat:hasHealthPoints"]:
+                jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"] = 10
+            
+            jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"] = min(30, jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"])
 
         db.cards.find_one_and_replace(
             {"@id": jsonld["@id"]},
