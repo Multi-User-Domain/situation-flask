@@ -5,7 +5,7 @@ import base64
 import io
 from flask import Flask, request, jsonify, send_file, Response
 #from rdflib import Graph
-from urllib.parse import unquote_plus
+from urllib.parse import urlparse
 from urllib.request import urlopen
 from PIL import Image
 from pymongo import MongoClient
@@ -39,7 +39,7 @@ REST endpoints for characters, cards, events, actions
 def _get_headers(extra_headers={}):
     headers = {
         'Access-Control-Allow-Headers': 'access-control-allow-origin, content-type',
-        'Access-Control-Allow-Methods': 'GET, POST, DELETE',
+        'Access-Control-Allow-Methods': 'GET, POST, DELETE, PATCH, OPTIONS',
         'Access-Control-Allow-Credentials': "true"
     }
     if 'Origin' in request.headers:
@@ -124,13 +124,15 @@ def cards():
         
         # process image
         if "foaf:depiction" in jsonld and len(jsonld["foaf:depiction"]) > 0:
-            fd = urlopen(jsonld["foaf:depiction"])
-            image_file = io.BytesIO(fd.read())
-            im = Image.open(image_file)
-            im.thumbnail((512, 512), Image.Resampling.LANCZOS)
-            filename = str(uuid.uuid4()) + ".png"
-            im.save(f'./images/{filename}')
-            jsonld["foaf:depiction"] = site_url + "/images/" + filename
+            # don't try to read images from own site
+            if not urlparse(jsonld["foaf:depiction"]).host == urlparse(site_url).host:
+                fd = urlopen(jsonld["foaf:depiction"])
+                image_file = io.BytesIO(fd.read())
+                im = Image.open(image_file)
+                im.thumbnail((512, 512), Image.Resampling.LANCZOS)
+                filename = str(uuid.uuid4()) + ".png"
+                im.save(f'./images/{filename}')
+                jsonld["foaf:depiction"] = site_url + "/images/" + filename
         
         # TODO: workaround, fix client-side
         if "mudcard:hasAvailableInstantActions" in jsonld:
