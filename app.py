@@ -123,7 +123,7 @@ def cards():
             jsonld["@id"] = f"{site_url}/cards/{str(uuid.uuid4())}/"
         
         # process image
-        if "foaf:depiction" in jsonld and len(jsonld["foaf:depiction"] > 0):
+        if "foaf:depiction" in jsonld and len(jsonld["foaf:depiction"]) > 0:
             fd = urlopen(jsonld["foaf:depiction"])
             image_file = io.BytesIO(fd.read())
             im = Image.open(image_file)
