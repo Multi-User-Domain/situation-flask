@@ -125,7 +125,7 @@ def cards():
         # process image
         if "foaf:depiction" in jsonld and len(jsonld["foaf:depiction"]) > 0:
             # don't try to read images from own site
-            if not urlparse(jsonld["foaf:depiction"]).host == urlparse(site_url).host:
+            if not urlparse(jsonld["foaf:depiction"]).netloc == urlparse(site_url).netloc:
                 fd = urlopen(jsonld["foaf:depiction"])
                 image_file = io.BytesIO(fd.read())
                 im = Image.open(image_file)
