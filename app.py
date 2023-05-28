@@ -143,11 +143,10 @@ def cards():
     if request.method == 'PATCH':
         jsonld = copy.deepcopy(request.get_json())
 
-        if "_id" in jsonld:
-            jsonld.pop("_id")
-
-        if "@id" not in jsonld or len(jsonld["@id"]) == 0:
-            return "@id is required for PATCH", 400
+        if "_id" not in jsonld:
+            return "_id is required for PATCH", 400
+        
+        _id = jsonld.pop("_id")
         
         # process image
         if "foaf:depiction" in jsonld:
@@ -160,8 +159,8 @@ def cards():
             jsonld["foaf:depiction"] = site_url + "/images/" + filename
 
         db.cards.find_one_and_update(
-            {"@id": jsonld["@id"]},
-            jsonld
+            {"_id": "key1"},
+            {"$set": jsonld}
         )
 
         return jsonify(jsonld), 200, _get_headers({'Content-Type': 'application/ld+json'})
