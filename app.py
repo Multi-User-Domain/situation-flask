@@ -105,7 +105,7 @@ def characters():
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
-@app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
+@app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'PATCH', 'OPTIONS'])
 def cards():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
@@ -140,6 +140,32 @@ def cards():
 
         return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
     
+    if request.method == 'PATCH':
+        jsonld = copy.deepcopy(request.get_json())
+
+        if "_id" in jsonld:
+            jsonld.pop("_id")
+
+        if "@id" not in jsonld or len(jsonld["@id"]) == 0:
+            return "@id is required for PATCH", 400
+        
+        # process image
+        if "foaf:depiction" in jsonld:
+            fd = urlopen(jsonld["foaf:depiction"])
+            image_file = io.BytesIO(fd.read())
+            im = Image.open(image_file)
+            im.thumbnail((512, 512), Image.Resampling.LANCZOS)
+            filename = str(uuid.uuid4()) + ".png"
+            im.save(f'./images/{filename}')
+            jsonld["foaf:depiction"] = site_url + "/images/" + filename
+
+        db.cards.find_one_and_update(
+            {"@id": jsonld["@id"]},
+            jsonld
+        )
+
+        return jsonify(jsonld), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
     if request.method == 'DELETE':
         jsonld = request.get_json()
 
