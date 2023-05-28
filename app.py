@@ -105,7 +105,7 @@ def characters():
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
-@app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'PATCH', 'OPTIONS'])
+@app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def cards():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
@@ -123,7 +123,7 @@ def cards():
             jsonld["@id"] = f"{site_url}/cards/{str(uuid.uuid4())}/"
         
         # process image
-        if "foaf:depiction" in jsonld:
+        if "foaf:depiction" in jsonld and len(jsonld["foaf:depiction"] > 0):
             fd = urlopen(jsonld["foaf:depiction"])
             image_file = io.BytesIO(fd.read())
             im = Image.open(image_file)
@@ -145,31 +145,6 @@ def cards():
         )
 
         return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
-    
-    if request.method == 'PATCH':
-        jsonld = copy.deepcopy(request.get_json())
-
-        if "_id" not in jsonld:
-            return "_id is required for PATCH", 400
-        
-        _id = jsonld.pop("_id")
-        
-        # process image
-        if "foaf:depiction" in jsonld:
-            fd = urlopen(jsonld["foaf:depiction"])
-            image_file = io.BytesIO(fd.read())
-            im = Image.open(image_file)
-            im.thumbnail((512, 512), Image.Resampling.LANCZOS)
-            filename = str(uuid.uuid4()) + ".png"
-            im.save(f'./images/{filename}')
-            jsonld["foaf:depiction"] = site_url + "/images/" + filename
-
-        db.cards.find_one_and_update(
-            {"_id": "key1"},
-            {"$set": jsonld}
-        )
-
-        return jsonify(jsonld), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
     if request.method == 'DELETE':
         jsonld = request.get_json()
@@ -177,7 +152,10 @@ def cards():
         if "@id" not in jsonld:
             return "@id key is required for DELETE", 400
         
-        db.cards.find_one_and_delete({"@id": jsonld["@id"]})
+        val = db.cards.find_one_and_delete({"@id": jsonld["@id"]})
+
+        if val is None:
+            return "", 404, _get_headers()
 
         return "", 204, _get_headers()
 
