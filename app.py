@@ -131,6 +131,12 @@ def cards():
             filename = str(uuid.uuid4()) + ".png"
             im.save(f'./images/{filename}')
             jsonld["foaf:depiction"] = site_url + "/images/" + filename
+        
+        # TODO: workaround, fix client-side
+        if "mudcard:hasAvailableInstantActions" in jsonld:
+            for i in range(len(jsonld["mudcard:hasAvailableInstantActions"])):
+                if "uri" in jsonld["mudcard:hasAvailableInstantActions"][i]:
+                    jsonld["mudcard:hasAvailableInstantActions"][i]["@id"] = jsonld["mudcard:hasAvailableInstantActions"][i].pop("uri")
 
         db.cards.find_one_and_replace(
             {"@id": jsonld["@id"]},
