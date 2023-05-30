@@ -10,7 +10,7 @@ from urllib.request import urlopen
 from PIL import Image
 from pymongo import MongoClient
 from bson import json_util
-from mud.vocab import MUD_CHAR
+from mud.vocab import MUD_CHAR, MUD_DIALOGUE
 
 # config
 
@@ -184,6 +184,47 @@ def cards():
 
     cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(cards))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
+@app.route("/ud/stories/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
+def stories():
+    if request.method == 'OPTIONS':
+        return _get_default_options_response(request)
+    
+    if request.method == 'POST':
+        jsonld = copy.deepcopy(request.get_json())
+
+        if "_id" in jsonld:
+            jsonld.pop("_id")
+
+        if "@type" not in jsonld or len(jsonld["@type"]) == 0:
+            jsonld["@type"] = MUD_DIALOGUE.Interaction
+
+        if "@id" not in jsonld or len(jsonld["@id"]) == 0:
+            jsonld["@id"] = f"{site_url}/ud/stories/{str(uuid.uuid4())}/"
+
+        db.stories.find_one_and_replace(
+            {"@id": jsonld["@id"]},
+            jsonld,
+            upsert=True
+        )
+
+        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+
+    if request.method == 'DELETE':
+        jsonld = request.get_json()
+
+        if "@id" not in jsonld:
+            return "@id key is required for DELETE", 400
+        
+        val = db.stories.find_one_and_delete({"@id": jsonld["@id"]})
+
+        if val is None:
+            return "", 404, _get_headers()
+
+        return "", 204, _get_headers()
+
+    stories = list(db.stories.find({"@type": MUD_DIALOGUE.Interaction}))
+    return jsonify(json.loads(json_util.dumps(stories))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
 '''
 Routes for supporting complex behaviour in cards

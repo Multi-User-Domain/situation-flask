@@ -17,3 +17,7 @@ class StrEnum(str, Enum):
 
 class MUD_CHAR(StrEnum):
     Character = "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"
+
+
+class MUD_DIALOGUE(StrEnum):
+    Interaction = "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/muddialogue.ttl#Interaction"
