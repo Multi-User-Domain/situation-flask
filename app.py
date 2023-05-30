@@ -145,7 +145,21 @@ def cards():
             if "mudcombat:maximumP" not in jsonld["mudcombat:hasHealthPoints"]:
                 jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"] = 10
             
-            jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"] = min(30, jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"])
+            jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"] = min(30, int(jsonld["mudcombat:hasHealthPoints"]["mudcombat:maximumP"]))
+        
+        # clean resistance value - make sure it's a percentage
+        if "mudcombat:hasResistances" in jsonld:
+            for i in range(jsonld["mudcombat:hasResistances"]):
+                resistance = jsonld["mudcombat:hasResistances"][i]
+                if "mudcombat:resistanceValue" not in resistance:
+                    jsonld["mudcombat:hasResistances"][i]["mudcombat:resistanceValue"] = 0.5
+                elif resistance["mudcombat:resistanceValue"] > 1:
+                    res_value = resistance["mudcombat:resistanceValue"] * 0.1
+
+                    while res_value > 1:
+                        res_value = res_value * 0.1
+
+                    jsonld["mudcombat:hasResistances"][i]["mudcombat:resistanceValue"] = res_value
 
         db.cards.find_one_and_replace(
             {"@id": jsonld["@id"]},
