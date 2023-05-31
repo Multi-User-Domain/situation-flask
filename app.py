@@ -67,6 +67,13 @@ def _base64_to_png_response(image_as_base64_string: str, filename="image.png"):
 def image_uploaded(image_path):
     return send_file(f"./images/{image_path}", mimetype='image/png'), 200, _get_headers()
 
+@app.route("/characters/<character_id>/", methods=['GET'])
+def character_detail(character_id):
+    c = db.characters.find_one({"@id": f"{site_url}/characters/{character_id}/"})
+    if c is None:
+        return "character with this urlid not found", 404
+    return jsonify(json.loads(json_util.dumps(c))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
 @app.route("/characters/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def characters():
     if request.method == 'OPTIONS':
@@ -83,6 +90,18 @@ def characters():
 
         if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/characters/{str(uuid.uuid4())}/"
+
+        # process image
+        if "foaf:depiction" in jsonld and len(jsonld["foaf:depiction"]) > 0:
+            # don't try to read images from own site
+            if not urlparse(jsonld["foaf:depiction"]).netloc == urlparse(site_url).netloc:
+                fd = urlopen(jsonld["foaf:depiction"])
+                image_file = io.BytesIO(fd.read())
+                im = Image.open(image_file)
+                im.thumbnail((512, 512), Image.Resampling.LANCZOS)
+                filename = str(uuid.uuid4()) + ".png"
+                im.save(f'./images/{filename}')
+                jsonld["foaf:depiction"] = site_url + "/images/" + filename
 
         db.characters.find_one_and_replace(
             {"@id": jsonld["@id"]},
