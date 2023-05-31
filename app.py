@@ -4,7 +4,8 @@ import uuid
 import base64
 import io
 from flask import Flask, request, jsonify, send_file, Response
-#from rdflib import Graph
+from rdflib import Graph
+from pyshacl import validate
 from urllib.parse import urlparse
 from urllib.request import urlopen
 from PIL import Image
@@ -258,6 +259,57 @@ def stories():
 
     stories = list(db.stories.find({"@type": MUD_DIALOGUE.Interaction}))
     return jsonify(json.loads(json_util.dumps(stories))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
+@app.route("/ud/generateContext/", methods=['POST', 'OPTIONS'])
+def generate_context():
+    """
+    Takes a given dialogue Interaction and world state and makes the appropriate bindings/generates the appropriate content according to the Interaction bindings
+    Returns the result
+    """
+    if request.method == 'OPTIONS':
+        return _get_default_options_response(request)
+    
+    jsonld = request.get_json()
+
+    if "givenInteraction" not in jsonld or "givenWorld" not in jsonld:
+        return "'givenInteraction' and 'givenWorld' are required parameters for this function", 400
+    
+    interaction_data = jsonld["givenInteraction"]
+    # NOTE: for now the world data is just a list of candidate characters
+    world_data = jsonld["givenWorld"]
+
+    for i in range(len(interaction_data["muddialogue:hasBindings"])):
+        binding = interaction_data["muddialogue:hasBindings"][i]
+        shape = binding["muddialogue:bindingMadeToShape"]
+
+        # TODO: a better way to tell if I need to fetch it
+        if len(shape.keys()) == 1 and "@id" in shape:
+            # TODO: read remote shape
+            return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400
+        
+        # TODO: pop() candidate once selected or not, instruction for this in the Interaction bindings
+        selected_candidate = None
+
+        for candidate_obj in world_data:
+            world_graph = Graph().parse(data=json.dumps(candidate_obj), format='json-ld')
+            shape_graph = Graph().parse(data=json.dumps(shape), format='json-ld')
+
+            # returns a tuple (conforms, results_graph, results_text)
+            validate_result = validate(world_graph, shape_graph)
+            if validate_result[0]:
+                selected_candidate = candidate_obj
+                break
+        
+        if selected_candidate is not None:
+            interaction_data["muddialogue:hasBindings"][i]["muddialogue:boundTo"] = selected_candidate
+        # TODO: try to generate a candidate which matches the binding
+        else:
+            return f"Could not make a binding to shape {shape['@id']} with given world data", 404
+
+    return jsonify({
+        "givenInteraction": interaction_data,
+        "givenWorld": world_data
+    }), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
 '''
 Routes for supporting complex behaviour in cards
