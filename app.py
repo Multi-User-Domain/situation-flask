@@ -124,6 +124,13 @@ def characters():
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
+@app.route("/cards/<card_id>/", methods=['GET'])
+def card_detail(card_id):
+    c = db.cards.find_one({"@id": f"{site_url}/cards/{card_id}/"})
+    if c is None:
+        return "card with this urlid not found", 404
+    return jsonify(json.loads(json_util.dumps(c))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
 @app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def cards():
     if request.method == 'OPTIONS':
@@ -203,6 +210,13 @@ def cards():
 
     cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
     return jsonify(json.loads(json_util.dumps(cards))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
+@app.route("/ud/stories/<story_id>/", methods=['GET'])
+def story_detail(story_id):
+    s = db.stories.find_one({"@id": f"{site_url}/stories/{story_id}/"})
+    if s is None:
+        return "story with this urlid not found", 404
+    return jsonify(json.loads(json_util.dumps(s))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/ud/stories/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def stories():
