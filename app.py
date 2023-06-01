@@ -69,6 +69,11 @@ def _base64_to_png_response(image_as_base64_string: str, filename="image.png"):
 def image_uploaded(image_path):
     return send_file(f"./images/{image_path}", mimetype='image/png'), 200, _get_headers()
 
+@app.route("/characters/by/<creator>/", methods=['GET'])
+def characters_by_user(creator):
+    characters = list(db.characters.find({"dcterms:creator": creator}))
+    return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+
 @app.route("/characters/<character_id>/", methods=['GET'])
 def character_detail(character_id):
     c = db.characters.find_one({"@id": f"{site_url}/characters/{character_id}/"})
