@@ -286,7 +286,7 @@ def generate_context():
 
     for i in range(len(interaction_data["muddialogue:hasBindings"])):
         binding = interaction_data["muddialogue:hasBindings"][i]
-        shape = binding["muddialogue:bindingMadeToShape"]
+        shape = binding["muddialogue:bindingMadeToShape"] if "muddialogue:bindingMadeToShape" in binding else {}
 
         # TODO: a better way to tell if I need to fetch it
         if len(shape.keys()) == 1 and "@id" in shape:
