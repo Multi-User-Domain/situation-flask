@@ -293,10 +293,13 @@ def generate_context():
             # TODO: read remote shape
             return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400
         
-        # TODO: pop() candidate once selected or not, instruction for this in the Interaction bindings
         selected_candidate = None
 
+        # TODO: greedy matching like this means that sometimes I will fail due to order of candidates
         for candidate_obj in world_data:
+            if "muddialogue:bindingToType" in binding and "@type" in candidate_obj and binding["muddialogue:bindingToType"] != candidate_obj["@type"]:
+                continue
+
             world_graph = Graph().parse(data=json.dumps(candidate_obj), format='json-ld')
             shape_graph = Graph().parse(data=json.dumps(shape), format='json-ld')
 
@@ -304,6 +307,8 @@ def generate_context():
             validate_result = validate(world_graph, shape_graph)
             if validate_result[0]:
                 selected_candidate = candidate_obj
+                if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
+                    world_data.pop(candidate_obj)
                 break
         
         if selected_candidate is not None:
