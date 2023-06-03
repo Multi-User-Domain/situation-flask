@@ -294,9 +294,14 @@ def generate_context():
             return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400
         
         selected_candidate = None
+        exclude_candidates = []
 
-        # TODO: greedy matching like this means that sometimes I will fail due to order of candidates
         for candidate_obj in world_data:
+            if candidate_obj["@id"] in exclude_candidates:
+                # TODO: greedy matching like this means that sometimes I will fail due to order of candidates
+                #  on failing I could try to find a better solution by replacing an existing selection
+                continue
+
             if "muddialogue:bindingToType" in binding and "@type" in candidate_obj and binding["muddialogue:bindingToType"] != candidate_obj["@type"]:
                 continue
 
@@ -308,7 +313,7 @@ def generate_context():
             if validate_result[0]:
                 selected_candidate = candidate_obj
                 if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
-                    world_data.pop(candidate_obj)
+                    exclude_candidate.append(candidate_obj["@id"])
                 break
         
         if selected_candidate is not None:
