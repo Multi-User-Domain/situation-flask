@@ -278,7 +278,7 @@ def generate_context():
     jsonld = request.get_json()
 
     if "givenInteraction" not in jsonld or "givenWorld" not in jsonld:
-        return "'givenInteraction' and 'givenWorld' are required parameters for this function", 400
+        return "'givenInteraction' and 'givenWorld' are required parameters for this function", 400, _get_headers()
     
     interaction_data = jsonld["givenInteraction"]
     # NOTE: for now the world data is just a list of candidate characters
@@ -292,7 +292,7 @@ def generate_context():
         # TODO: a better way to tell if I need to fetch it
         if len(shape.keys()) == 1 and "@id" in shape:
             # TODO: read remote shape
-            return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400
+            return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400, _get_headers()
         
         selected_candidate = None
 
@@ -320,7 +320,7 @@ def generate_context():
             interaction_data["muddialogue:hasBindings"][i]["muddialogue:boundTo"] = selected_candidate
         # TODO: try to generate a candidate which matches the binding
         else:
-            return f"Could not make a binding to shape {shape['@id']} with given world data", 404
+            return f"Could not make a binding to shape {shape['@id']} with given world data", 404, _get_headers()
 
     return jsonify({
         "givenInteraction": interaction_data,
