@@ -283,6 +283,7 @@ def generate_context():
     interaction_data = jsonld["givenInteraction"]
     # NOTE: for now the world data is just a list of candidate characters
     world_data = jsonld["givenWorld"]
+    exclude_candidates = []
 
     for i in range(len(interaction_data["muddialogue:hasBindings"])):
         binding = interaction_data["muddialogue:hasBindings"][i]
@@ -294,7 +295,6 @@ def generate_context():
             return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400
         
         selected_candidate = None
-        exclude_candidates = []
 
         for candidate_obj in world_data:
             if candidate_obj["@id"] in exclude_candidates:
