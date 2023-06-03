@@ -313,7 +313,7 @@ def generate_context():
             if validate_result[0]:
                 selected_candidate = candidate_obj
                 if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
-                    exclude_candidate.append(candidate_obj["@id"])
+                    exclude_candidates.append(candidate_obj["@id"])
                 break
         
         if selected_candidate is not None:
