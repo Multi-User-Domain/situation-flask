@@ -311,7 +311,7 @@ def generate_context():
             # returns a tuple (conforms, results_graph, results_text)
             validate_result, report, message = validate(world_graph, shape_graph=shape_graph, inference="none", debug=True)
             if validate_result:
-                print(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result[0]) + ")")
+                print(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
                 print(str(shape))
                 selected_candidate = candidate_obj
                 if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
