@@ -308,15 +308,15 @@ def generate_context():
 
             world_graph = Graph()
             world_graph.parse(data=json.dumps(candidate_obj), format='json-ld')
-            shape_graph = Graph()
-            shape_graph.parse(data=json.dumps(shape), format='json-ld')
+            shapes = Graph()
+            shapes.parse(data=json.dumps(shape), format='json-ld')
 
             # returns a tuple (conforms, results_graph, results_text)
-            validate_result, report, message = validate(world_graph, shape_graph=shape_graph, inference="none", debug=True)
+            validate_result, report, message = validate(world_graph, shacl_graph=shapes, inference="none", debug=True)
             syslog.syslog(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
             syslog.syslog(str(world_graph.serialize()))
             syslog.syslog("\n\n")
-            syslog.syslog(str(shape_graph.serialize()))
+            syslog.syslog(str(shapes.serialize()))
             if validate_result:
                 selected_candidate = candidate_obj
                 if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
