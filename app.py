@@ -2,6 +2,7 @@ import json
 import copy
 import uuid
 import base64
+import syslog
 import io
 from flask import Flask, request, jsonify, send_file, Response
 from rdflib import Graph
@@ -312,10 +313,10 @@ def generate_context():
 
             # returns a tuple (conforms, results_graph, results_text)
             validate_result, report, message = validate(world_graph, shape_graph=shape_graph, inference="none", debug=True)
-            print(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
-            print(str(world_graph.serialize()))
-            print("\n\n")
-            print(str(shape_graph.serialize()))
+            syslog.syslog(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
+            syslog.syslog(str(world_graph.serialize()))
+            syslog.syslog("\n\n")
+            syslog.syslog(str(shape_graph.serialize()))
             if validate_result:
                 selected_candidate = candidate_obj
                 if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
@@ -323,7 +324,7 @@ def generate_context():
                 break
         
         if selected_candidate is not None:
-            print("setting selected candidate")
+            syslog.syslog("setting selected candidate")
             interaction_data["muddialogue:hasBindings"][i]["muddialogue:boundTo"] = selected_candidate
         # TODO: try to generate a candidate which matches the binding
         else:
