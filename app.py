@@ -305,8 +305,10 @@ def generate_context():
             if "muddialogue:bindingToType" in binding and "@type" in candidate_obj and binding["muddialogue:bindingToType"] != candidate_obj["@type"]:
                 continue
 
-            world_graph = Graph().parse(data=json.dumps(candidate_obj), format='json-ld')
-            shape_graph = Graph().parse(data=json.dumps(shape), format='json-ld')
+            world_graph = Graph()
+            world_graph.parse(data=json.dumps(candidate_obj), format='json-ld')
+            shape_graph = Graph()
+            shape_graph.parse(data=json.dumps(shape), format='json-ld')
 
             # returns a tuple (conforms, results_graph, results_text)
             validate_result, report, message = validate(world_graph, shape_graph=shape_graph, inference="none", debug=True)
