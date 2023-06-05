@@ -328,7 +328,8 @@ def generate_context():
             interaction_data["muddialogue:hasBindings"][i]["muddialogue:boundTo"] = selected_candidate
         # TODO: try to generate a candidate which matches the binding
         else:
-            return f"Could not make a binding to shape {shape['@id']} with given world data", 404, _get_headers()
+            shape_name = shape['@id'] if "@id" in shape else shape["n:fn"] if "n:fn" in shape else ""
+            return f"Could not make a binding to shape {shape_name} with given world data", 404, _get_headers()
 
     return jsonify({
         "givenInteraction": interaction_data,
