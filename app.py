@@ -309,7 +309,7 @@ def generate_context():
             shape_graph = Graph().parse(data=json.dumps(shape), format='json-ld')
 
             # returns a tuple (conforms, results_graph, results_text)
-            validate_result = validate(world_graph, shape_graph)
+            validate_result = validate(world_graph, shape_graph=shape_graph, inference="none")
             if validate_result[0]:
                 selected_candidate = candidate_obj
                 if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
