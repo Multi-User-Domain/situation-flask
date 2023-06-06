@@ -276,6 +276,41 @@ def generate_context():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
     
+    def fail_unable_to_find_binding(shape):
+        shape_name = shape['@id'] if "@id" in shape else shape["n:fn"] if "n:fn" in shape else ""
+        return f"Could not make a binding to shape {shape_name} with given world data", 404, _get_headers()
+
+    def can_bind_candidate_to_shape(candidate_obj, shape):
+        world_graph = Graph()
+        world_graph.parse(data=json.dumps(candidate_obj), format='json-ld')
+        shapes = Graph()
+        shapes.parse(data=json.dumps(shape), format='json-ld')
+
+        validate_result, report, message = validate(world_graph, shacl_graph=shapes, debug=True)
+        #syslog.syslog(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
+        #syslog.syslog(str(world_graph.serialize()))
+        #syslog.syslog("\n\n")
+        #syslog.syslog(str(shapes.serialize()))
+        return validate_result
+    
+    def get_candidates_from_world_data_for_binding(world_data, binding, shape):
+        """
+        Iterates over the world_data candidates
+        :return: a list of all candidate indecies who meet the conditions of the binding/shape
+        """
+        
+        valid_choices = []
+        for candidate_idx in range(len(world_data)):
+            candidate_obj = world_data[candidate_idx]
+
+            #if "muddialogue:bindingToType" in binding and "@type" in candidate_obj and binding["muddialogue:bindingToType"] != candidate_obj["@type"]:
+            #    continue
+            
+            if can_bind_candidate_to_shape(candidate_obj, shape):
+                valid_choices.append(candidate_idx)
+        
+        return valid_choices
+    
     jsonld = request.get_json()
 
     if "givenInteraction" not in jsonld or "givenWorld" not in jsonld:
@@ -284,8 +319,10 @@ def generate_context():
     interaction_data = jsonld["givenInteraction"]
     # NOTE: for now the world data is just a list of candidate characters
     world_data = jsonld["givenWorld"]
-    exclude_candidates = []
+    # a dictionary which will contain all binding matches and information about them
+    binding_candidates_dict = {}
 
+    # iterate each binding and create a map of candidates from the world data which could be applied to it
     for i in range(len(interaction_data["muddialogue:hasBindings"])):
         binding = interaction_data["muddialogue:hasBindings"][i]
         shape = binding["muddialogue:bindingMadeToShape"] if "muddialogue:bindingMadeToShape" in binding else {}
@@ -295,41 +332,86 @@ def generate_context():
             # TODO: read remote shape
             return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400, _get_headers()
         
-        selected_candidate = None
+        valid_candidates = get_candidates_from_world_data_for_binding(world_data, binding, shape)
 
-        for candidate_obj in world_data:
-            if candidate_obj["@id"] in exclude_candidates:
-                # TODO: greedy matching like this means that sometimes I will fail due to order of candidates
-                #  on failing I could try to find a better solution by replacing an existing selection
-                continue
-
-            if "muddialogue:bindingToType" in binding and "@type" in candidate_obj and binding["muddialogue:bindingToType"] != candidate_obj["@type"]:
-                continue
-
-            world_graph = Graph()
-            world_graph.parse(data=json.dumps(candidate_obj), format='json-ld')
-            shapes = Graph()
-            shapes.parse(data=json.dumps(shape), format='json-ld')
-
-            # returns a tuple (conforms, results_graph, results_text)
-            validate_result, report, message = validate(world_graph, shacl_graph=shapes, inference="none", debug=True)
-            syslog.syslog(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
-            syslog.syslog(str(world_graph.serialize()))
-            syslog.syslog("\n\n")
-            syslog.syslog(str(shapes.serialize()))
-            if validate_result:
-                selected_candidate = candidate_obj
-                if "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]:
-                    exclude_candidates.append(candidate_obj["@id"])
-                break
+        # TODO: instruction for generating a candidate if none avaliable
+        if len(valid_candidates) == 0:
+            print("no valid candidates available for shape " + str(shape))
+            syslog.syslog("no valid candidates available for shape " + str(shape))
+            return fail_unable_to_find_binding(shape)
         
-        if selected_candidate is not None:
-            syslog.syslog("setting selected candidate")
-            interaction_data["muddialogue:hasBindings"][i]["muddialogue:boundTo"] = selected_candidate
-        # TODO: try to generate a candidate which matches the binding
+        binding_candidates_dict[str(i)] = {
+            "valid_candidates": valid_candidates,
+            "unique": "muddialogue:bindingIsUnique" in binding and binding["muddialogue:bindingIsUnique"]
+        }
+    
+    # for each binding, select the candidates which will be applied to it
+    unique_bindings = [binding_candidates_dict[b] for b in binding_candidates_dict.keys() if binding_candidates_dict[b]["unique"]]
+    candidates_in_unique_bindings = set()
+    for b in unique_bindings:
+        candidates_in_unique_bindings = candidates_in_unique_bindings.union(set([c for c in b["valid_candidates"]]))
+    
+    commit_selection = [] # array containing indecies that can't be selected again
+    
+    def non_committed_candidates(candidates):
+        return [c for c in candidates if c not in commit_selection]    
+
+    for binding_idx in binding_candidates_dict.keys():
+        binding = binding_candidates_dict[binding_idx]
+        # if this binding only has one choice, choose it
+        if len(binding["valid_candidates"]) == 1:
+            interaction_data["muddialogue:hasBindings"][int(binding_idx)]["muddialogue:boundTo"] = world_data[binding["valid_candidates"][0]]
+            if binding["unique"]:
+                commit_selection.append(binding["valid_candidates"][0])
+            continue
+
+        # if this binding isn't unique, if there is a candidate which doesn't exist in a unique_binding then select it
+        if not binding["unique"]:
+            for candidate in non_committed_candidates(binding["valid_candidates"]):
+                if candidate not in candidates_in_unique_bindings:
+                    interaction_data["muddialogue:hasBindings"][int(binding_idx)]["muddialogue:boundTo"] = world_data[candidate]
+                    break
+            if "muddialogue:boundTo" in interaction_data["muddialogue:hasBindings"][binding_idx] and \
+                interaction_data["muddialogue:hasBindings"][int(binding_idx)]["muddialogue:boundTo"] is not None:
+                continue
+            
+            # if those unique bindings lack options which are outside of this binding, it's impossible to succeed
+            interest_candidates = set(non_committed_candidates(candidates_in_unique_bindings)).difference(set(non_committed_candidates(binding["valid_candidates"])))
+            if len(interest_candiates) == 0:
+                return fail_unable_to_find_binding(shape)
+
+            # NOTE: this isn't fool-proof, just a good choice
+            # select from a unique binding which has other options one of my overlapping candidates
+            for u in unique_bindings:
+                diff_set = set(non_committed_candidates(u["valid_candidates"])).difference(set(non_committed_candidates(binding["valid_candidates"])))
+                if len(diff_set) > 0:
+                    selected_idx = list(set(non_committed_candidates(u["valid_candidates"])).difference(diff_set))[0]
+                    interaction_data["muddialogue:hasBindings"][int(binding_idx)]["muddialogue:boundTo"] = world_data[selected_idx]
+                    if binding["unique"]:
+                        commit_selection.append(selected_idx)
+                    break
+        # this binding is unique
         else:
-            shape_name = shape['@id'] if "@id" in shape else shape["n:fn"] if "n:fn" in shape else ""
-            return f"Could not make a binding to shape {shape_name} with given world data", 404, _get_headers()
+            # if there is a candidate which doesn't exist in another binding, select it
+            candidate_set = set(non_committed_candidates(binding["valid_candidates"]))
+            for b in binding_candidates_dict.keys():
+                b = int(b)
+                if b != binding:
+                    continue
+                candidate_set = candidate_set.difference(set(b["valid_candidates"]))
+            if len(candidate_set) > 0:
+                selected_idx = list(candidate_set)[0]
+                interaction_data["muddialogue:hasBindings"][int(binding_idx)]["muddialogue:boundTo"] = world_data[selected_idx]
+                commit_selection.append(selected_idx)
+                continue
+            
+            # NOTE: this isn't fool-proof, just a good choice
+            # TODO: select a candidate which exists only in bindings with the most options
+            #for candidate in non_committed_candidates(binding["valid_candidates"]):
+            #    pass
+            selected_idx = non_committed_candidates(binding["valid_candidates"])[0]
+            interaction_data["muddialogue:hasBindings"][int(binding_idx)]["muddialogue:boundTo"] = world_data[selected_idx]
+            commit_selection.append(selected_idx)
 
     return jsonify({
         "givenInteraction": interaction_data,
