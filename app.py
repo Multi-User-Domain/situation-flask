@@ -286,7 +286,7 @@ def generate_context():
         shapes = Graph()
         shapes.parse(data=json.dumps(shape), format='json-ld')
 
-        validate_result, report, message = validate(world_graph, shacl_graph=shapes, debug=True)
+        validate_result, report, message = validate(world_graph, shacl_graph=shapes, inference="none")
         #syslog.syslog(str(candidate_obj["@id"]) + " passed on shape (" + str(validate_result) + ")")
         #syslog.syslog(str(world_graph.serialize()))
         #syslog.syslog("\n\n")
@@ -351,6 +351,7 @@ def generate_context():
     for b in unique_bindings:
         candidates_in_unique_bindings = candidates_in_unique_bindings.union(set([c for c in b["valid_candidates"]]))
     
+    print(str(binding_candidates_dict))
     commit_selection = [] # array containing indecies that can't be selected again
     
     def non_committed_candidates(candidates):
@@ -394,9 +395,9 @@ def generate_context():
         else:
             # if there is a candidate which doesn't exist in another binding, select it
             candidate_set = set(non_committed_candidates(binding["valid_candidates"]))
-            for b in binding_candidates_dict.keys():
-                b = int(b)
-                if b != binding:
+            for b_idx in binding_candidates_dict.keys():
+                b = binding_candidates_dict[b_idx]
+                if b_idx == binding_idx:
                     continue
                 candidate_set = candidate_set.difference(set(b["valid_candidates"]))
             if len(candidate_set) > 0:
