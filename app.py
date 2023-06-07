@@ -12,7 +12,7 @@ from urllib.request import urlopen
 from PIL import Image
 from pymongo import MongoClient
 from bson import json_util
-from mud.vocab import MUD_CHAR, MUD_DIALOGUE
+from mud.vocab import MUD_ACCT, MUD_CHAR, MUD_DIALOGUE
 from mud.utils import get_target_obj, get_recorded_history_for_event, prepare_action_changes
 
 # config
@@ -69,6 +69,36 @@ def _base64_to_png_response(image_as_base64_string: str, filename="image.png"):
 @app.route("/images/<image_path>")
 def image_uploaded(image_path):
     return send_file(f"./images/{image_path}", mimetype='image/png'), 200, _get_headers()
+
+@app.route("/register/", methods=["POST"])
+def register():
+    jsonld = copy.deepcopy(request.get_json())
+    if "foaf:username" not in jsonld:
+        return "foaf:username is required", 400, _get_headers()
+    if len(list(db.users.find({"foaf:username": jsonld["foaf:username"]}))) > 0:
+        return "user already exists", 409, _get_headers()
+    
+    if "_id" in jsonld:
+        jsonld.pop("_id")
+
+    if "@type" not in jsonld or len(jsonld["@type"]) == 0:
+        jsonld["@type"] = "foaf:Person"
+
+    if "@id" not in jsonld or len(jsonld["@id"]) == 0:
+        jsonld["@id"] = f"{site_url}/users/{str(jsonld['foaf:username'])}/"
+    
+    if "mudacct:Account" not in jsonld:
+        jsonld["mudacct:Account"] = {
+            "@id": f"{site_url}/users/{str(jsonld['foaf:username'])}/account/",
+            "@type": MUD_ACCT.Account,
+            "mudacct:characterList": f"{site_url}/characters/by/{str(jsonld['foaf:username'])}/"
+        }
+
+    db.users.find_one_and_replace(
+        {"foaf:username": jsonld["foaf:username"]},
+        jsonld,
+        upsert=True
+    )
 
 @app.route("/characters/by/<creator>/", methods=['GET'])
 def characters_by_user(creator):

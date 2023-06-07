@@ -15,6 +15,10 @@ class StrEnum(str, Enum):
         return self.value
 
 
+class MUD_ACCT(StrEnum):
+    Account = "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudacct.ttl#Account"
+
+
 class MUD_CHAR(StrEnum):
     Character = "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"
 
