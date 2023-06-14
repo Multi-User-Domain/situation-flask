@@ -25,3 +25,6 @@ class MUD_CHAR(StrEnum):
 
 class MUD_DIALOGUE(StrEnum):
     Interaction = "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/muddialogue.ttl#Interaction"
+
+class MUD_WORLD(StrEnum):
+    Region = "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudworld.ttl#Region"
