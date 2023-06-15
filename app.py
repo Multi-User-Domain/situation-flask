@@ -256,7 +256,7 @@ def world_templates_detail(world_id):
         return "world with this urlid not found", 404
     return jsonify(json.loads(json_util.dumps(w))), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
-@app.route("worlds/templates/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
+@app.route("/worlds/templates/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def world_templates():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
