@@ -545,6 +545,13 @@ def generate_context():
         "givenWorld": world_data
     }), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
+@app.route("/content/sceneDescription/", methods=["POST", "OPTIONS"])
+def scene_description():
+    if request.method == 'OPTIONS':
+        return _get_default_options_response(request)
+    
+    return "Scene Description endpoint is TODO"
+
 '''
 Routes for supporting complex behaviour in cards
 '''
