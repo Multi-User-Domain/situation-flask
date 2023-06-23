@@ -550,16 +550,19 @@ def scene_description():
     if request.method == 'OPTIONS':
         return _get_default_options_response(request)
     
+    # TODO: include the agent who is perceiving the object
     return jsonify({
         "@context": {
-            "mudcontent":"https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#",
-            "n": "http://www.w3.org/2006/vcard/ns#"
+            "mudcontent":"https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#"
         },
-        "@id": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/examples/mudContentDescription.json",
-        "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#Content",
-        "mudcontent:describes": "https://example.com/queenAnnesRevenge/",
-        "mudcontent:hasText": "The Queen Anne's Revenge is an elegant sloop, swift and mouverable",
-        "mudcontent:hasImage": "https://example.com/queenAnnesRevenge/"
+        "@id": "_CharacterSees",
+        "mudcontent:sees": {
+            "@id": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/examples/mudContentDescription.json",
+            "@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudcontent.ttl#Content",
+            "mudcontent:describes": "https://example.com/queenAnnesRevenge/",
+            "mudcontent:hasText": "The Queen Anne's Revenge is an elegant sloop, swift and mouverable",
+            "mudcontent:hasImage": "https://example.com/queenAnnesRevenge/"
+        }
     }), 200, _get_headers({'Content-Type': 'application/ld+json'})
 
 '''
