@@ -14,6 +14,7 @@ from bson import json_util
 from mud.vocab import MUD_ACCT, MUD_CHAR, MUD_DIALOGUE, MUD_WORLD
 from mud.utils import get_target_obj, get_recorded_history_for_event, prepare_action_changes
 from config import app, db, site_url
+from view_utils import get_headers, get_default_options_response
 
 @app.route("/")
 def main():
@@ -30,44 +31,17 @@ def character_templates():
 REST endpoints for characters, cards, events, actions
 '''
 
-def _get_headers(extra_headers={}):
-    headers = {
-        'Access-Control-Allow-Headers': 'access-control-allow-origin, content-type',
-        'Access-Control-Allow-Methods': 'GET, POST, DELETE, PATCH, OPTIONS',
-        'Access-Control-Allow-Credentials': "true"
-    }
-    if 'Origin' in request.headers:
-        headers['Access-Control-Allow-Origin'] = request.headers['Origin']
-    for header in extra_headers.keys():
-        headers[header] = extra_headers[header]
-    return headers
-
-def _get_default_options_response(request):
-    return jsonify({}), 200, _get_headers()
-
-def _base64_to_png_response(image_as_base64_string: str, filename="image.png"):
-  """
-  From a string representing a base64 image, convert it to a png
-  and wrap it in a flask Response"""
-  image_data = image_as_base64_string.replace('data:image/png;base64,', '')
-  decoded_image = base64.b64decode(image_data)
-  response_headers = {
-      'Content-Type': 'image/png',
-      'Content-Disposition': f'attachment; filename={filename}'
-  }
-  return Response(decoded_image, headers=response_headers)
-
 @app.route("/images/<image_path>")
 def image_uploaded(image_path):
-    return send_file(f"./images/{image_path}", mimetype='image/png'), 200, _get_headers()
+    return send_file(f"./images/{image_path}", mimetype='image/png'), 200, get_headers()
 
 @app.route("/register/", methods=["POST"])
 def register():
     jsonld = copy.deepcopy(request.get_json())
     if "foaf:username" not in jsonld:
-        return "foaf:username is required", 400, _get_headers()
+        return "foaf:username is required", 400, get_headers()
     if len(list(db.users.find({"foaf:username": jsonld["foaf:username"]}))) > 0:
-        return "user already exists", 409, _get_headers()
+        return "user already exists", 409, get_headers()
     
     if "_id" in jsonld:
         jsonld.pop("_id")
@@ -94,19 +68,19 @@ def register():
 @app.route("/characters/by/<creator>/", methods=['GET'])
 def characters_by_user(creator):
     characters = list(db.characters.find({"dcterms:creator": creator}))
-    return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(characters))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/characters/<character_id>/", methods=['GET'])
 def character_detail(character_id):
     c = db.characters.find_one({"@id": f"{site_url}/characters/{character_id}/"})
     if c is None:
         return "character with this urlid not found", 404
-    return jsonify(json.loads(json_util.dumps(c))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(c))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/characters/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def characters():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
@@ -138,7 +112,7 @@ def characters():
             upsert=True
         )
 
-        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+        return jsonify(jsonld), 201, get_headers({'Content-Type': 'application/ld+json'})
     
     if request.method == 'DELETE':
         jsonld = request.get_json()
@@ -148,22 +122,22 @@ def characters():
 
         db.characters.find_one_and_delete({"@id": jsonld["@id"]})
 
-        return "", 204, _get_headers()
+        return "", 204, get_headers()
 
     characters = list(db.characters.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
-    return jsonify(json.loads(json_util.dumps(characters))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(characters))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/cards/<card_id>/", methods=['GET'])
 def card_detail(card_id):
     c = db.cards.find_one({"@id": f"{site_url}/cards/{card_id}/"})
     if c is None:
         return "card with this urlid not found", 404
-    return jsonify(json.loads(json_util.dumps(c))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(c))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/cards/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def cards():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
@@ -222,7 +196,7 @@ def cards():
             upsert=True
         )
 
-        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+        return jsonify(jsonld), 201, get_headers({'Content-Type': 'application/ld+json'})
 
     if request.method == 'DELETE':
         jsonld = request.get_json()
@@ -233,24 +207,24 @@ def cards():
         val = db.cards.find_one_and_delete({"@id": jsonld["@id"]})
 
         if val is None:
-            return "", 404, _get_headers()
+            return "", 404, get_headers()
 
-        return "", 204, _get_headers()
+        return "", 204, get_headers()
 
     cards = list(db.cards.find({"@type": "https://raw.githubusercontent.com/Multi-User-Domain/vocab/main/mudchar.ttl#Character"}))
-    return jsonify(json.loads(json_util.dumps(cards))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(cards))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/worlds/templates/<world_id>/", methods=['GET'])
 def world_templates_detail(world_id):
     w = db.world_templates.find_one({"@id": f"{site_url}/worlds/templates/{world_id}/"})
     if w is None:
         return "world with this urlid not found", 404
-    return jsonify(json.loads(json_util.dumps(w))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(w))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/worlds/templates/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def world_templates():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
@@ -270,7 +244,7 @@ def world_templates():
             upsert=True
         )
 
-        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+        return jsonify(jsonld), 201, get_headers({'Content-Type': 'application/ld+json'})
 
     if request.method == 'DELETE':
         jsonld = request.get_json()
@@ -281,24 +255,24 @@ def world_templates():
         val = db.world_templates.find_one_and_delete({"@id": jsonld["@id"]})
 
         if val is None:
-            return "", 404, _get_headers()
+            return "", 404, get_headers()
 
-        return "", 204, _get_headers()
+        return "", 204, get_headers()
 
     world = list(db.world_templates.find({"@type": MUD_WORLD.Region}))
-    return jsonify(json.loads(json_util.dumps(world))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(world))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/worlds/<world_id>/", methods=['GET'])
 def world_detail(world_id):
     w = db.worlds.find_one({"@id": f"{site_url}/worlds/{world_id}/"})
     if w is None:
         return "world with this urlid not found", 404
-    return jsonify(json.loads(json_util.dumps(w))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(w))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/worlds/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def worlds():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
@@ -318,7 +292,7 @@ def worlds():
             upsert=True
         )
 
-        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+        return jsonify(jsonld), 201, get_headers({'Content-Type': 'application/ld+json'})
 
     if request.method == 'DELETE':
         jsonld = request.get_json()
@@ -329,24 +303,24 @@ def worlds():
         val = db.worlds.find_one_and_delete({"@id": jsonld["@id"]})
 
         if val is None:
-            return "", 404, _get_headers()
+            return "", 404, get_headers()
 
-        return "", 204, _get_headers()
+        return "", 204, get_headers()
 
     world = list(db.worlds.find({"@type": MUD_WORLD.Region}))
-    return jsonify(json.loads(json_util.dumps(world))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(world))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/ud/stories/<story_id>/", methods=['GET'])
 def story_detail(story_id):
     s = db.stories.find_one({"@id": f"{site_url}/ud/stories/{story_id}/"})
     if s is None:
         return "story with this urlid not found", 404
-    return jsonify(json.loads(json_util.dumps(s))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(s))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/ud/stories/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def stories():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     if request.method == 'POST':
         jsonld = copy.deepcopy(request.get_json())
@@ -366,7 +340,7 @@ def stories():
             upsert=True
         )
 
-        return jsonify(jsonld), 201, _get_headers({'Content-Type': 'application/ld+json'})
+        return jsonify(jsonld), 201, get_headers({'Content-Type': 'application/ld+json'})
 
     if request.method == 'DELETE':
         jsonld = request.get_json()
@@ -377,12 +351,12 @@ def stories():
         val = db.stories.find_one_and_delete({"@id": jsonld["@id"]})
 
         if val is None:
-            return "", 404, _get_headers()
+            return "", 404, get_headers()
 
-        return "", 204, _get_headers()
+        return "", 204, get_headers()
 
     stories = list(db.stories.find({"@type": MUD_DIALOGUE.Interaction}))
-    return jsonify(json.loads(json_util.dumps(stories))), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(json.loads(json_util.dumps(stories))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/ud/generateContext/", methods=['POST', 'OPTIONS'])
 def generate_context():
@@ -391,11 +365,11 @@ def generate_context():
     Returns the result
     """
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     def fail_unable_to_find_binding(shape):
         shape_name = shape['@id'] if "@id" in shape else shape["n:fn"] if "n:fn" in shape else ""
-        return f"Could not make a binding to shape {shape_name} with given world data", 404, _get_headers()
+        return f"Could not make a binding to shape {shape_name} with given world data", 404, get_headers()
 
     def can_bind_candidate_to_shape(candidate_obj, shape):
         world_graph = Graph()
@@ -431,7 +405,7 @@ def generate_context():
     jsonld = request.get_json()
 
     if "givenInteraction" not in jsonld or "givenWorld" not in jsonld:
-        return "'givenInteraction' and 'givenWorld' are required parameters for this function", 400, _get_headers()
+        return "'givenInteraction' and 'givenWorld' are required parameters for this function", 400, get_headers()
     
     interaction_data = jsonld["givenInteraction"]
     # NOTE: for now the world data is just a list of candidate characters
@@ -447,7 +421,7 @@ def generate_context():
         # TODO: a better way to tell if I need to fetch it
         if len(shape.keys()) == 1 and "@id" in shape:
             # TODO: read remote shape
-            return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400, _get_headers()
+            return "Remote shapes are not currently supported, please serialize all binding shapes fully into JSON-LD", 400, get_headers()
         
         valid_candidates = get_candidates_from_world_data_for_binding(world_data, binding, shape)
 
@@ -534,12 +508,12 @@ def generate_context():
     return jsonify({
         "givenInteraction": interaction_data,
         "givenWorld": world_data
-    }), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    }), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 @app.route("/content/sceneDescription/", methods=["POST", "OPTIONS"])
 def scene_description():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
     
     # TODO: include the agent who is perceiving the object
     return jsonify({
@@ -554,7 +528,7 @@ def scene_description():
             "mudcontent:hasText": "The Queen Anne's Revenge is an elegant sloop, swift and mouverable",
             "mudcontent:hasImage": "https://example.com/queenAnnesRevenge/"
         }
-    }), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    }), 200, get_headers({'Content-Type': 'application/ld+json'})
 
 '''
 Routes for supporting complex behaviour in cards
@@ -566,7 +540,7 @@ Routes for supporting complex behaviour in cards
 @app.route("/bogMonsterEatsVillager/", methods=["POST", "OPTIONS"])
 def bog_monster_eats_villager():
     if request.method == 'OPTIONS':
-        return _get_default_options_response(request)
+        return get_default_options_response(request)
 
     data = request.get_json()
     world_data = data["worldData"]
@@ -592,4 +566,4 @@ def bog_monster_eats_villager():
                 result = prepare_action_changes(action_data, [], inserts)
                 break
 
-    return jsonify(result), 200, _get_headers({'Content-Type': 'application/ld+json'})
+    return jsonify(result), 200, get_headers({'Content-Type': 'application/ld+json'})
