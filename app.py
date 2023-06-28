@@ -4,25 +4,16 @@ import uuid
 import base64
 import syslog
 import io
-from flask import Flask, request, jsonify, send_file, Response
+from flask import request, jsonify, send_file, Response
 from rdflib import Graph
 from pyshacl import validate
 from urllib.parse import urlparse
 from urllib.request import urlopen
 from PIL import Image
-from pymongo import MongoClient
 from bson import json_util
 from mud.vocab import MUD_ACCT, MUD_CHAR, MUD_DIALOGUE, MUD_WORLD
 from mud.utils import get_target_obj, get_recorded_history_for_event, prepare_action_changes
-
-# config
-
-app = Flask(__name__)
-
-# TODO: environment variables
-client = MongoClient('localhost', 27017)
-db = client.situation
-site_url = "https://api.realm.games.coop"
+from config import app, db, site_url
 
 @app.route("/")
 def main():
