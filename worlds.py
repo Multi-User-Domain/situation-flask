@@ -68,32 +68,50 @@ def world_detail(world_id):
 
 
 def generate_tile_map_for_world(jsonld):
-    # read the tile map size parameters from the object, or store defaults if this information is missing
-    tile_map_x_size = 90
-    tile_map_y_size = 90
-    tile_map_z_size = 0
+    assert "mudworld:hasRegions" in jsonld, "Require a world with regions in order to generate tilemap"
 
-    if "mudworld:hasSize" in jsonld:
-        if "x" in jsonld["mudworld:hasSize"]:
-            tile_map_x_size = jsonld["mudworld:hasSize"]["x"]
-        if "y" in jsonld["mudworld:hasSize"]:
-            tile_map_y_size = jsonld["mudworld:hasSize"]["y"]
-        if "z" in jsonld["mudworld:hasSize"]:
-            tile_map_z_size = jsonld["mudworld:hasSize"]["z"]
-    else:
-        jsonld["mudworld:hasSize"] = {
-            "@type":"https://w3id.org/mdo/structure/CoordinateVector","x": tile_map_x_size, "y": tile_map_y_size,"z": tile_map_z_size
-        }
+    def generate_empty_tilemap(region):
+        # don't replace existing tilemap
+        if "mudworld:hasTileMap" in region:
+            return region
 
-    # generate the size of the tile map
-    # TODO: support 3D maps
-    jsonld['mudworld:hasTileMap'] = []
-    for x in range(tile_map_x_size):
-        jsonld['mudworld:hasTileMap'].append([])
-        for y in range(tile_map_y_size):
-            jsonld['mudworld:hasTileMap'][x][y] = -1
+        # read the tile map size parameters from the object, or store defaults if this information is missing
+        tile_map_x_size = 90
+        tile_map_y_size = 90
+        tile_map_z_size = 0
+
+        if "mudworld:hasSize" in region:
+            if "x" in region["mudworld:hasSize"]:
+                tile_map_x_size = region["mudworld:hasSize"]["x"]
+            if "y" in region["mudworld:hasSize"]:
+                tile_map_y_size = region["mudworld:hasSize"]["y"]
+            if "z" in region["mudworld:hasSize"]:
+                tile_map_z_size = region["mudworld:hasSize"]["z"]
+        else:
+            region["mudworld:hasSize"] = {
+                "@type":"https://w3id.org/mdo/structure/CoordinateVector","x": tile_map_x_size, "y": tile_map_y_size,"z": tile_map_z_size
+            }
+
+        # generate the size of the tile map
+        # TODO: support 3D maps
+        region['mudworld:hasTileMap'] = []
+        for x in range(tile_map_x_size):
+            region['mudworld:hasTileMap'] = [[-1] * tile_map_y_size] * tile_map_x_size
+        
+        # TODO: procedural generation from instructions. Place objects which exist in the region etc
+        return region
     
-    # TODO: procedural generation from instructions. Place objects which exist in the region etc
+    def generate_tile_map_for_leaf_regions(region):
+        if "mudworld:hasRegions" in region:
+            for i in range(len(region["mudworld:hasRegions"])):
+                region["mudworld:hasRegions"][i] = generate_tile_map_for_leaf_regions(region["mudworld:hasRegions"][i])
+        else:
+            region = generate_empty_tilemap(region)
+        
+        return region
+
+    # generate tile maps for all leaf regions
+    jsonld = generate_tile_map_for_leaf_regions(jsonld)
     
     return jsonld
 
@@ -115,7 +133,7 @@ def worlds():
         if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/worlds/{str(uuid.uuid4())}/"
         
-        if "mudworld:hasTileMap" not in jsonld:
+        if "mudworld:hasRegions" in jsonld:
             jsonld = generate_tile_map_for_world(jsonld)
 
         db.worlds.find_one_and_replace(
