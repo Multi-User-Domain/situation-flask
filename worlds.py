@@ -66,6 +66,38 @@ def world_detail(world_id):
         return "world with this urlid not found", 404
     return jsonify(json.loads(json_util.dumps(w))), 200, get_headers({'Content-Type': 'application/ld+json'})
 
+
+def generate_tile_map_for_world(jsonld):
+    # read the tile map size parameters from the object, or store defaults if this information is missing
+    tile_map_x_size = 90
+    tile_map_y_size = 90
+    tile_map_z_size = 0
+
+    if "mudworld:hasSize" in jsonld:
+        if "x" in jsonld["mudworld:hasSize"]:
+            tile_map_x_size = jsonld["mudworld:hasSize"]["x"]
+        if "y" in jsonld["mudworld:hasSize"]:
+            tile_map_y_size = jsonld["mudworld:hasSize"]["y"]
+        if "z" in jsonld["mudworld:hasSize"]:
+            tile_map_z_size = jsonld["mudworld:hasSize"]["z"]
+    else:
+        jsonld["mudworld:hasSize"] = {
+            "@type":"https://w3id.org/mdo/structure/CoordinateVector","x": tile_map_x_size, "y": tile_map_y_size,"z": tile_map_z_size
+        }
+
+    # generate the size of the tile map
+    # TODO: support 3D maps
+    jsonld['mudworld:hasTileMap'] = []
+    for x in range(tile_map_x_size):
+        jsonld['mudworld:hasTileMap'].append([])
+        for y in range(tile_map_y_size):
+            jsonld['mudworld:hasTileMap'][x][y] = -1
+    
+    # TODO: procedural generation from instructions. Place objects which exist in the region etc
+    
+    return jsonld
+
+
 @worlds_blueprint.route("/", methods=['GET', 'POST', 'DELETE', 'OPTIONS'])
 def worlds():
     if request.method == 'OPTIONS':
@@ -82,6 +114,9 @@ def worlds():
 
         if "@id" not in jsonld or len(jsonld["@id"]) == 0:
             jsonld["@id"] = f"{site_url}/worlds/{str(uuid.uuid4())}/"
+        
+        if "mudworld:hasTileMap" not in jsonld:
+            jsonld = generate_tile_map_for_world(jsonld)
 
         db.worlds.find_one_and_replace(
             {"@id": jsonld["@id"]},
