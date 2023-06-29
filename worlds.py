@@ -92,9 +92,11 @@ def generate_tile_map_for_world(jsonld):
                 "@type":"https://w3id.org/mdo/structure/CoordinateVector","x": tile_map_x_size, "y": tile_map_y_size,"z": tile_map_z_size
             }
 
-        # generate the size of the tile map
-        # TODO: support 3D maps
-        region['mudworld:hasTileMap'] = [[-1] * tile_map_y_size] * tile_map_x_size
+        # generate the size of the tile map, in 3D or in 2D
+        if tile_map_z_size > 0:
+            region['mudworld:hasTileMap'] = [[[-1] * tile_map_z_size] * tile_map_y_size] * tile_map_x_size
+        else:
+            region['mudworld:hasTileMap'] = [[-1] * tile_map_y_size] * tile_map_x_size
         
         # TODO: procedural generation from instructions. Place objects which exist in the region etc
         return region
