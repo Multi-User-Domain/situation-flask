@@ -94,9 +94,7 @@ def generate_tile_map_for_world(jsonld):
 
         # generate the size of the tile map
         # TODO: support 3D maps
-        region['mudworld:hasTileMap'] = []
-        for x in range(tile_map_x_size):
-            region['mudworld:hasTileMap'] = [[-1] * tile_map_y_size] * tile_map_x_size
+        region['mudworld:hasTileMap'] = [[-1] * tile_map_y_size] * tile_map_x_size
         
         # TODO: procedural generation from instructions. Place objects which exist in the region etc
         return region
