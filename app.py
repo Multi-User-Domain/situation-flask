@@ -25,6 +25,10 @@ def main():
 def image_uploaded(image_path):
     return send_file(f"./images/{image_path}", mimetype='image/png'), 200, get_headers()
 
+@app.route("/ink/<file_path>")
+def ink_uploaded(file_path):
+    return send_file(f"./ink/{file_path}", mimetype='application/inkml+xml'), 200, get_headers()
+
 @app.route("/content/sceneDescription/", methods=["POST", "OPTIONS"])
 def scene_description():
     if request.method == 'OPTIONS':

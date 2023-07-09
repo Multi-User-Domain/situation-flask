@@ -102,6 +102,10 @@ def generate_tile_map_for_world(jsonld):
         return region
     
     def generate_tile_map_for_leaf_regions(region):
+        """
+        Recursive function iterates over given world data and will generate an empty tile map for every "leaf region", i.e.
+        every region which doesn't have sub-regions
+        """
         if "mudworld:hasRegions" in region:
             for i in range(len(region["mudworld:hasRegions"])):
                 region["mudworld:hasRegions"][i] = generate_tile_map_for_leaf_regions(region["mudworld:hasRegions"][i])
