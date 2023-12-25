@@ -8,4 +8,4 @@ from pymongo import MongoClient
 app = Flask(__name__)
 client = MongoClient('localhost', 27017)
 db = client.situation
-site_url = "https://api.realm.games.coop"
+site_url = "https://simpolis.gamescommons.com"
