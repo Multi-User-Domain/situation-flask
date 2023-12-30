@@ -7,7 +7,6 @@ from urllib.request import urlopen
 from bson import json_util
 from PIL import Image
 from flask import Blueprint, request, jsonify
-from mud.vocab import MUD_CHAR
 from view_utils import get_headers, get_default_options_response
 from config import db, site_url
 

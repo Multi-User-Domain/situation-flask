@@ -11,6 +11,7 @@ from cards import cards_blueprint
 from worlds import worlds_blueprint
 from ud import ud_blueprint
 from items import items_blueprint
+from actions import actions_blueprint
 
 app.register_blueprint(users_blueprint)
 app.register_blueprint(characters_blueprint, url_prefix='/characters')
@@ -18,6 +19,7 @@ app.register_blueprint(cards_blueprint, url_prefix='/cards')
 app.register_blueprint(worlds_blueprint, url_prefix='/worlds')
 app.register_blueprint(ud_blueprint, url_prefix='/ud')
 app.register_blueprint(items_blueprint, url_prefix='/items')
+app.register_blueprint(actions_blueprint, url_prefix='/actions')
 
 @app.route("/")
 def main():
