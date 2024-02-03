@@ -21,6 +21,12 @@ app.register_blueprint(ud_blueprint, url_prefix='/ud')
 app.register_blueprint(items_blueprint, url_prefix='/items')
 app.register_blueprint(actions_blueprint, url_prefix='/actions')
 
+@app.route("/.well-known/games-commons-configuration/")
+def games_commons_configuration():
+    return jsonify({
+        "actionDiscovery": "https://simpolis.gamescommons.com/act/discover/"
+    }), 200, get_headers({'Content-Type': 'application/json'})
+
 @app.route("/")
 def main():
     return "Hello world!", 200
