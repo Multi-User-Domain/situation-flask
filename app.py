@@ -2,7 +2,8 @@ import json
 import copy
 import uuid
 from flask import request, jsonify, send_file
-from config import app
+from config import db, app
+from bson import json_util
 from view_utils import get_headers, get_default_options_response
 from users import users_blueprint
 from characters import characters_blueprint
@@ -25,6 +26,11 @@ def games_commons_configuration():
     return jsonify({
         "actionDiscovery": "https://simpolis.gamescommons.com/act/discover/"
     }), 200, get_headers({'Content-Type': 'application/json'})
+
+@app.route("/act/discover/", methods=["POST"])
+def action_discovery():
+    jsonld = copy.deepcopy(request.get_json())
+    return jsonify(json.loads(json_util.dumps(db.actions.find(jsonld["target"]))))
 
 @app.route("/")
 def main():
