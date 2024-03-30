@@ -30,7 +30,7 @@ def games_commons_configuration():
 @app.route("/act/discover/", methods=["POST"])
 def action_discovery():
     jsonld = copy.deepcopy(request.get_json())
-    return jsonify(json.loads(json_util.dumps(db.actions.find(jsonld["target"]))))
+    return jsonify(json.loads(json_util.dumps(db.recipes.find(jsonld["target"]))))
 
 @app.route("/")
 def main():
